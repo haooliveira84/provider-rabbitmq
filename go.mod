@@ -1,4 +1,4 @@
-module github.com/upbound/upjet-provider-template
+module github.com/haooliveira84/provider-rabbitmq
 
 go 1.19
 

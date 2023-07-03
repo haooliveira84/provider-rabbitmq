@@ -24,12 +24,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/upbound/upjet-provider-template/apis"
-	"github.com/upbound/upjet-provider-template/apis/v1alpha1"
-	"github.com/upbound/upjet-provider-template/config"
-	"github.com/upbound/upjet-provider-template/internal/clients"
-	"github.com/upbound/upjet-provider-template/internal/controller"
-	"github.com/upbound/upjet-provider-template/internal/features"
+	"github.com/haooliveira84/provider-rabbitmq/apis"
+	"github.com/haooliveira84/provider-rabbitmq/apis/v1alpha1"
+	"github.com/haooliveira84/provider-rabbitmq/config"
+	"github.com/haooliveira84/provider-rabbitmq/internal/clients"
+	"github.com/haooliveira84/provider-rabbitmq/internal/controller"
+	"github.com/haooliveira84/provider-rabbitmq/internal/features"
 )
 
 func main() {

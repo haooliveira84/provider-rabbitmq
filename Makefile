@@ -1,18 +1,22 @@
 # ====================================================================================
 # Setup Project
 
-PROJECT_NAME ?= upjet-provider-template
-PROJECT_REPO ?= github.com/upbound/$(PROJECT_NAME)
+PROJECT_NAME ?= provider-rabbitmq
+PROJECT_REPO ?= github.com/haooliveira84/$(PROJECT_NAME)
 
 export TERRAFORM_VERSION ?= 1.3.3
 
-export TERRAFORM_PROVIDER_SOURCE ?= hashicorp/null
-export TERRAFORM_PROVIDER_REPO ?= https://github.com/hashicorp/terraform-provider-null
-export TERRAFORM_PROVIDER_VERSION ?= 3.1.0
-export TERRAFORM_PROVIDER_DOWNLOAD_NAME ?= terraform-provider-null
-export TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX ?= https://releases.hashicorp.com/$(TERRAFORM_PROVIDER_DOWNLOAD_NAME)/$(TERRAFORM_PROVIDER_VERSION)
-export TERRAFORM_NATIVE_PROVIDER_BINARY ?= terraform-provider-null_v3.1.0_x5
+export TERRAFORM_PROVIDER_SOURCE ?= cyrilgdn/terraform-provider-rabbitmq
+export TERRAFORM_PROVIDER_REPO ?= https://github.com/cyrilgdn/terraform-provider-rabbitmq
+export TERRAFORM_PROVIDER_VERSION ?= 1.8.0
+export TERRAFORM_PROVIDER_DOWNLOAD_NAME ?= terraform-provider-rabbitmq
+export TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX ?= https://github.com/cyrilgdn/terraform-provider-rabbitmq/releases/download/v1.8.0
+
 export TERRAFORM_DOCS_PATH ?= docs/resources
+
+export BUILD_REGISTRY := 574485109765.dkr.ecr.us-east-1.amazonaws.com/crossplane
+export DOCKER_REGISTRY := 574485109765.dkr.ecr.us-east-1.amazonaws.com/crossplane
+
 
 
 PLATFORMS ?= linux_amd64 linux_arm64
@@ -40,7 +44,7 @@ NPROCS ?= 1
 # to half the number of CPU cores.
 GO_TEST_PARALLEL := $(shell echo $$(( $(NPROCS) / 2 )))
 
-GO_REQUIRED_VERSION ?= 1.19
+GO_REQUIRED_VERSION ?= 1.20
 GOLANGCILINT_VERSION ?= 1.50.0
 GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/provider $(GO_PROJECT)/cmd/generator
 GO_LDFLAGS += -X $(GO_PROJECT)/internal/version.Version=$(VERSION)
@@ -59,19 +63,9 @@ UPTEST_VERSION = v0.2.1
 # ====================================================================================
 # Setup Images
 
-REGISTRY_ORGS ?= xpkg.upbound.io/upbound
+DOCKER_REGISTRY ?= crossplane
 IMAGES = $(PROJECT_NAME)
 -include build/makelib/imagelight.mk
-
-# ====================================================================================
-# Setup XPKG
-
-XPKG_REG_ORGS ?= xpkg.upbound.io/upbound
-# NOTE(hasheddan): skip promoting on xpkg.upbound.io as channel tags are
-# inferred.
-XPKG_REG_ORGS_NO_PROMOTE ?= xpkg.upbound.io/upbound
-XPKGS = $(PROJECT_NAME)
--include build/makelib/xpkg.mk
 
 # ====================================================================================
 # Fallthrough

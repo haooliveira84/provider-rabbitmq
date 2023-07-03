@@ -15,7 +15,7 @@ import (
 
 	"github.com/upbound/upjet/pkg/terraform"
 
-	"github.com/upbound/upjet-provider-template/apis/v1beta1"
+	"github.com/haooliveira84/provider-rabbitmq/apis/v1beta1"
 )
 
 const (
@@ -63,10 +63,10 @@ func TerraformSetupBuilder(version, providerSource, providerVersion string) terr
 		}
 
 		// Set credentials in Terraform provider configuration.
-		/*ps.Configuration = map[string]any{
+		ps.Configuration = map[string]any{
 			"username": creds["username"],
 			"password": creds["password"],
-		}*/
+		}
 		return ps, nil
 	}
 }
