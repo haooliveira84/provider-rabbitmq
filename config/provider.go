@@ -9,18 +9,6 @@ import (
 	_ "embed"
 
 	ujconfig "github.com/upbound/upjet/pkg/config"
-
-	"github.com/haooliveira84/provider-rabbitmq/config/rabbitmq/binding"
-	"github.com/haooliveira84/provider-rabbitmq/config/rabbitmq/exchange"
-	"github.com/haooliveira84/provider-rabbitmq/config/rabbitmq/federation_upstream"
-	"github.com/haooliveira84/provider-rabbitmq/config/rabbitmq/operator_policy"
-	"github.com/haooliveira84/provider-rabbitmq/config/rabbitmq/permissions"
-	"github.com/haooliveira84/provider-rabbitmq/config/rabbitmq/policy"
-	"github.com/haooliveira84/provider-rabbitmq/config/rabbitmq/queue"
-	"github.com/haooliveira84/provider-rabbitmq/config/rabbitmq/shovel"
-	"github.com/haooliveira84/provider-rabbitmq/config/rabbitmq/topic_permissions"
-	"github.com/haooliveira84/provider-rabbitmq/config/rabbitmq/user"
-	"github.com/haooliveira84/provider-rabbitmq/config/rabbitmq/vhost"
 )
 
 const (

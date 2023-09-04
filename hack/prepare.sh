@@ -7,17 +7,17 @@ read -r -p "Organization (ex. upbound, my-org-name): " ORGANIZATION_NAME
 
 REPLACE_FILES='./* ./.github :!build/** :!go.* :!hack/prepare.sh'
 # shellcheck disable=SC2086
-git grep -l 'rabbitmq' -- ${REPLACE_FILES} | xargs sed -i.bak "s/provider-rabbitmq/provider-${PROVIDER_NAME_LOWER}/g"
+git grep -l 'github' -- ${REPLACE_FILES} | xargs sed -i.bak "s/provider-github/provider-${PROVIDER_NAME_LOWER}/g"
 # shellcheck disable=SC2086
-git grep -l 'rabbitmq' -- ${REPLACE_FILES} | xargs sed -i.bak "s/rabbitmq/${PROVIDER_NAME_LOWER}/g"
+git grep -l 'github' -- ${REPLACE_FILES} | xargs sed -i.bak "s/github/${PROVIDER_NAME_LOWER}/g"
 # shellcheck disable=SC2086
 git grep -l "upbound/provider-${PROVIDER_NAME_LOWER}" -- ${REPLACE_FILES} | xargs sed -i.bak "s|upbound/provider-${PROVIDER_NAME_LOWER}|${ORGANIZATION_NAME}/provider-${PROVIDER_NAME_LOWER}|g"
 # shellcheck disable=SC2086
 git grep -l 'Template' -- ${REPLACE_FILES} | xargs sed -i.bak "s/Template/${PROVIDER_NAME_NORMAL}/g"
 # We need to be careful while replacing "rabbitmq" keyword in go.mod as it could tamper
 # some imported packages under require section.
-sed -i.bak "s|haooliveira84/provider-rabbitmq|${ORGANIZATION_NAME}/provider-${PROVIDER_NAME_LOWER}|g" go.mod
-sed -i.bak "s|PROJECT_REPO ?= github.com/upbound/|PROJECT_REPO ?= github.com/${ORGANIZATION_NAME}/|g" Makefile
+sed -i.bak "s|haooliveira84/provider-github|${ORGANIZATION_NAME}/provider-${PROVIDER_NAME_LOWER}|g" go.mod
+sed -i.bak "s|PROJECT_REPO ?= github.com/haooliveira84/|PROJECT_REPO ?= github.com/${ORGANIZATION_NAME}/|g" Makefile
 
 # Clean up the .bak files created by sed
 git clean -fd
