@@ -8,6 +8,18 @@ import (
 	// Note(turkenh): we are importing this to embed provider schema document
 	_ "embed"
 
+	"github.com/haooliveira84/provider-rabbitmq/config/binding"
+	"github.com/haooliveira84/provider-rabbitmq/config/exchange"
+	federationupstream "github.com/haooliveira84/provider-rabbitmq/config/federation_upstream"
+	operatorpolicy "github.com/haooliveira84/provider-rabbitmq/config/operator_policy"
+	"github.com/haooliveira84/provider-rabbitmq/config/permissions"
+	"github.com/haooliveira84/provider-rabbitmq/config/policy"
+	"github.com/haooliveira84/provider-rabbitmq/config/queue"
+	"github.com/haooliveira84/provider-rabbitmq/config/shovel"
+	topicpermissions "github.com/haooliveira84/provider-rabbitmq/config/topic_permissions"
+	"github.com/haooliveira84/provider-rabbitmq/config/user"
+	"github.com/haooliveira84/provider-rabbitmq/config/vhost"
+
 	ujconfig "github.com/upbound/upjet/pkg/config"
 )
 
@@ -33,7 +45,17 @@ func GetProvider() *ujconfig.Provider {
 
 	for _, configure := range []func(provider *ujconfig.Provider){
 		// add custom config functions
-		rabbitmq.Configure,
+		binding.Configure,
+		exchange.Configure,
+		federationupstream.Configure,
+		operatorpolicy.Configure,
+		permissions.Configure,
+		policy.Configure,
+		queue.Configure,
+		shovel.Configure,
+		topicpermissions.Configure,
+		user.Configure,
+		vhost.Configure,
 	} {
 		configure(pc)
 	}
