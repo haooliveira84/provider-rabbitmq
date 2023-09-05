@@ -6,17 +6,16 @@ PROJECT_REPO ?= github.com/haooliveira84/$(PROJECT_NAME)
 
 export TERRAFORM_VERSION ?= 1.3.3
 
-export TERRAFORM_PROVIDER_SOURCE := cyrilgdn/rabbitmq
-export TERRAFORM_PROVIDER_REPO := https://github.com/cyrilgdn/terraform-provider-rabbitmq
-export TERRAFORM_PROVIDER_VERSION := 1.8.0
+export TERRAFORM_PROVIDER_SOURCE := haooliveira/rabbitmq
+export TERRAFORM_PROVIDER_REPO := https://github.com/haooliveira/terraform-provider-rabbitmq
+export TERRAFORM_PROVIDER_VERSION := 1.8.2
 export TERRAFORM_PROVIDER_DOWNLOAD_NAME := terraform-provider-rabbitmq
-export TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX := https://github.com/cyrilgdn/terraform-provider-rabbitmq/releases/download/v1.8.0
+export TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX := https://github.com/haooliveira/terraform-provider-rabbitmq/releases/download/v1.8.2
 
 export TERRAFORM_DOCS_PATH ?= docs/resources
 
 export BUILD_REGISTRY := 574485109765.dkr.ecr.us-east-1.amazonaws.com/crossplane
 export DOCKER_REGISTRY := 574485109765.dkr.ecr.us-east-1.amazonaws.com/crossplane
-
 
 
 PLATFORMS ?= linux_amd64 linux_arm64
@@ -44,7 +43,7 @@ NPROCS ?= 1
 # to half the number of CPU cores.
 GO_TEST_PARALLEL := $(shell echo $$(( $(NPROCS) / 2 )))
 
-GO_REQUIRED_VERSION ?= 1.20
+GO_REQUIRED_VERSION ?= 1.19
 GOLANGCILINT_VERSION ?= 1.50.0
 GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/provider $(GO_PROJECT)/cmd/generator
 GO_LDFLAGS += -X $(GO_PROJECT)/internal/version.Version=$(VERSION)
@@ -55,17 +54,27 @@ GO_SUBDIRS += cmd internal apis
 # Setup Kubernetes tools
 
 KIND_VERSION = v0.15.0
-UP_VERSION = v0.17.0
+UP_VERSION = v0.18.0
 UP_CHANNEL = stable
-UPTEST_VERSION = v0.2.1
+UPTEST_VERSION = v0.5.0
 -include build/makelib/k8s_tools.mk
 
 # ====================================================================================
 # Setup Images
 
-DOCKER_REGISTRY ?= crossplane
+REGISTRY_ORGS ?= xpkg.upbound.io/upbound
 IMAGES = $(PROJECT_NAME)
 -include build/makelib/imagelight.mk
+
+# ====================================================================================
+# Setup XPKG
+
+XPKG_REG_ORGS ?= xpkg.upbound.io/upbound
+# NOTE(hasheddan): skip promoting on xpkg.upbound.io as channel tags are
+# inferred.
+XPKG_REG_ORGS_NO_PROMOTE ?= xpkg.upbound.io/upbound
+XPKGS = $(PROJECT_NAME)
+-include build/makelib/xpkg.mk
 
 # ====================================================================================
 # Fallthrough
@@ -83,7 +92,7 @@ fallthrough: submodules
 
 # NOTE(hasheddan): we force image building to happen prior to xpkg build so that
 # we ensure image is present in daemon.
-xpkg.build.upjet-provider-rabbitmq: do.build.images
+xpkg.build.provider-rabbitmq: do.build.images
 
 # NOTE(hasheddan): we ensure up is installed prior to running platform-specific
 # build steps in parallel to avoid encountering an installation race condition.
@@ -96,21 +105,21 @@ TERRAFORM_WORKDIR := $(WORK_DIR)/terraform
 TERRAFORM_PROVIDER_SCHEMA := config/schema.json
 
 $(TERRAFORM):
-	$(INFO) installing terraform $(HOSTOS)-$(HOSTARCH)
-	mkdir -p $(TOOLS_HOST_DIR)/tmp-terraform
-	curl -fsSL https://releases.hashicorp.com/terraform/$(TERRAFORM_VERSION)/terraform_$(TERRAFORM_VERSION)_$(SAFEHOST_PLATFORM).zip -o $(TOOLS_HOST_DIR)/tmp-terraform/terraform.zip
-	unzip $(TOOLS_HOST_DIR)/tmp-terraform/terraform.zip -d $(TOOLS_HOST_DIR)/tmp-terraform
-	mv $(TOOLS_HOST_DIR)/tmp-terraform/terraform $(TERRAFORM)
-	rm -fr $(TOOLS_HOST_DIR)/tmp-terraform
-	$(OK) installing terraform $(HOSTOS)-$(HOSTARCH)
+	@$(INFO) installing terraform $(HOSTOS)-$(HOSTARCH)
+	@mkdir -p $(TOOLS_HOST_DIR)/tmp-terraform
+	@curl -fsSL https://releases.hashicorp.com/terraform/$(TERRAFORM_VERSION)/terraform_$(TERRAFORM_VERSION)_$(SAFEHOST_PLATFORM).zip -o $(TOOLS_HOST_DIR)/tmp-terraform/terraform.zip
+	@unzip $(TOOLS_HOST_DIR)/tmp-terraform/terraform.zip -d $(TOOLS_HOST_DIR)/tmp-terraform
+	@mv $(TOOLS_HOST_DIR)/tmp-terraform/terraform $(TERRAFORM)
+	@rm -fr $(TOOLS_HOST_DIR)/tmp-terraform
+	@$(OK) installing terraform $(HOSTOS)-$(HOSTARCH)
 
 $(TERRAFORM_PROVIDER_SCHEMA): $(TERRAFORM)
-	$(INFO) generating provider schema for $(TERRAFORM_PROVIDER_SOURCE) $(TERRAFORM_PROVIDER_VERSION)
-	mkdir -p $(TERRAFORM_WORKDIR)
-	echo '{"terraform":[{"required_providers":[{"provider":{"source":"'"$(TERRAFORM_PROVIDER_SOURCE)"'","version":"'"$(TERRAFORM_PROVIDER_VERSION)"'"}}],"required_version":"'"$(TERRAFORM_VERSION)"'"}]}' > $(TERRAFORM_WORKDIR)/main.tf.json
-	$(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) init > $(TERRAFORM_WORKDIR)/terraform-logs.txt 2>&1
-	$(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) providers schema -json=true > $(TERRAFORM_PROVIDER_SCHEMA) 2>> $(TERRAFORM_WORKDIR)/terraform-logs.txt
-	$(OK) generating provider schema for $(TERRAFORM_PROVIDER_SOURCE) $(TERRAFORM_PROVIDER_VERSION)
+	@$(INFO) generating provider schema for $(TERRAFORM_PROVIDER_SOURCE) $(TERRAFORM_PROVIDER_VERSION)
+	@mkdir -p $(TERRAFORM_WORKDIR)
+	@echo '{"terraform":[{"required_providers":[{"provider":{"source":"'"$(TERRAFORM_PROVIDER_SOURCE)"'","version":"'"$(TERRAFORM_PROVIDER_VERSION)"'"}}],"required_version":"'"$(TERRAFORM_VERSION)"'"}]}' > $(TERRAFORM_WORKDIR)/main.tf.json
+	@$(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) init > $(TERRAFORM_WORKDIR)/terraform-logs.txt 2>&1
+	@$(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) providers schema -json=true > $(TERRAFORM_PROVIDER_SCHEMA) 2>> $(TERRAFORM_WORKDIR)/terraform-logs.txt
+	@$(OK) generating provider schema for $(TERRAFORM_PROVIDER_SOURCE) $(TERRAFORM_PROVIDER_VERSION)
 
 pull-docs:
 	@if [ ! -d "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)" ]; then \
@@ -160,9 +169,23 @@ CROSSPLANE_NAMESPACE = upbound-system
 -include build/makelib/local.xpkg.mk
 -include build/makelib/controlplane.mk
 
+# This target requires the following environment variables to be set:
+# - UPTEST_EXAMPLE_LIST, a comma-separated list of examples to test
+#   To ensure the proper functioning of the end-to-end test resource pre-deletion hook, it is crucial to arrange your resources appropriately.
+#   You can check the basic implementation here: https://github.com/upbound/uptest/blob/main/internal/rabbitmqs/01-delete.yaml.tmpl.
+# - UPTEST_CLOUD_CREDENTIALS (optional), multiple sets of AWS IAM User credentials specified as key=value pairs.
+#   The support keys are currently `DEFAULT` and `PEER`. So, an example for the value of this env. variable is:
+#   DEFAULT='[default]
+#   aws_access_key_id = REDACTED
+#   aws_secret_access_key = REDACTED'
+#   PEER='[default]
+#   aws_access_key_id = REDACTED
+#   aws_secret_access_key = REDACTED'
+#   The associated `ProviderConfig`s will be named as `default` and `peer`.
+# - UPTEST_DATASOURCE_PATH (optional), see https://github.com/upbound/uptest#injecting-dynamic-values-and-datasource
 uptest: $(UPTEST) $(KUBECTL) $(KUTTL)
 	@$(INFO) running automated tests
-	@KUBECTL=$(KUBECTL) KUTTL=$(KUTTL) $(UPTEST) e2e "${UPTEST_EXAMPLE_LIST}" --setup-script=cluster/test/setup.sh || $(FAIL)
+	@KUBECTL=$(KUBECTL) KUTTL=$(KUTTL) $(UPTEST) e2e "${UPTEST_EXAMPLE_LIST}" --data-source="${UPTEST_DATASOURCE_PATH}" --setup-script=cluster/test/setup.sh --default-conditions="Test" || $(FAIL)
 	@$(OK) running automated tests
 
 local-deploy: build controlplane.up local.xpkg.deploy.provider.$(PROJECT_NAME)
@@ -172,6 +195,33 @@ local-deploy: build controlplane.up local.xpkg.deploy.provider.$(PROJECT_NAME)
 	@$(OK) running locally built provider
 
 e2e: local-deploy uptest
+
+crddiff: $(UPTEST)
+	@$(INFO) Checking breaking CRD schema changes
+	@for crd in $${MODIFIED_CRD_LIST}; do \
+		if ! git cat-file -e "$${GITHUB_BASE_REF}:$${crd}" 2>/dev/rabbitmq; then \
+			echo "CRD $${crd} does not exist in the $${GITHUB_BASE_REF} branch. Skipping..." ; \
+			continue ; \
+		fi ; \
+		echo "Checking $${crd} for breaking API changes..." ; \
+		changes_detected=$$($(UPTEST) crddiff revision <(git cat-file -p "$${GITHUB_BASE_REF}:$${crd}") "$${crd}" 2>&1) ; \
+		if [[ $$? != 0 ]] ; then \
+			printf "\033[31m"; echo "Breaking change detected!"; printf "\033[0m" ; \
+			echo "$${changes_detected}" ; \
+			echo ; \
+		fi ; \
+	done
+	@$(OK) Checking breaking CRD schema changes
+
+schema-version-diff:
+	@$(INFO) Checking for native state schema version changes
+	@export PREV_PROVIDER_VERSION=$$(git cat-file -p "${GITHUB_BASE_REF}:Makefile" | sed -nr 's/^export[[:space:]]*TERRAFORM_PROVIDER_VERSION[[:space:]]*:=[[:space:]]*(.+)/\1/p'); \
+	echo Detected previous Terraform provider version: $${PREV_PROVIDER_VERSION}; \
+	echo Current Terraform provider version: $${TERRAFORM_PROVIDER_VERSION}; \
+	mkdir -p $(WORK_DIR); \
+	git cat-file -p "$${GITHUB_BASE_REF}:config/schema.json" > "$(WORK_DIR)/schema.json.$${PREV_PROVIDER_VERSION}"; \
+	./scripts/version_diff.py config/generated.lst "$(WORK_DIR)/schema.json.$${PREV_PROVIDER_VERSION}" config/schema.json
+	@$(OK) Checking for native state schema version changes
 
 .PHONY: cobertura submodules fallthrough run crds.clean
 

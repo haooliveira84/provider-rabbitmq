@@ -1,6 +1,6 @@
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
-  name: upjet-provider-rabbitmq
+  name: provider-rabbitmq
 spec:
   package: haooliveira84/provider-rabbitmq:v0.1.0

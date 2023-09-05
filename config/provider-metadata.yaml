@@ -1,9 +1,9 @@
-name: hashicorp/null
+name: hashicorp/rabbitmq
 resources:
-    null_resource Resource - terraform-provider-null:
+    rabbitmq_resource Resource - terraform-provider-rabbitmq:
         subCategory: ""
-        description: The null_resource resource implements the standard resource lifecycle but takes no further action. The triggers argument allows specifying an arbitrary set of values that, when changed, will cause the resource to be replaced.
-        name: null_resource Resource - terraform-provider-null
-        title: null_resource Resource - terraform-provider-null
+        description: The rabbitmq_resource resource implements the standard resource lifecycle but takes no further action. The triggers argument allows specifying an arbitrary set of values that, when changed, will cause the resource to be replaced.
+        name: rabbitmq_resource Resource - terraform-provider-rabbitmq
+        title: rabbitmq_resource Resource - terraform-provider-rabbitmq
         argumentDocs: {}
         importStatements: []

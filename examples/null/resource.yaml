@@ -1,4 +1,4 @@
-apiVersion: rabbit.upbound.io/v1alpha1
+apiVersion: rabbitmq.rabbitmq.crossplane.io/v1alpha1
 kind: Resource
 metadata:
   name: example

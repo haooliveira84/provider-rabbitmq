@@ -1,9 +1,9 @@
-# Provider Template
+# Provider rabbitmq
 
-`upjet-provider-template` is a [Crossplane](https://crossplane.io/) provider that
+`provider-rabbitmq` is a [Crossplane](https://crossplane.io/) provider that
 is built using [Upjet](https://github.com/upbound/upjet) code
 generation tools and exposes XRM-conformant managed resources for the
-Template API.
+rabbitmq API.
 
 ## Getting Started
 
@@ -19,7 +19,7 @@ cat <<EOF | kubectl apply -f -
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
-  name: upjet-provider-template
+  name: provider-rabbitmq
 spec:
   package: haooliveira84/provider-rabbitmq:v0.1.0
 EOF
