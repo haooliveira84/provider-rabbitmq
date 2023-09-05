@@ -5,9 +5,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: resources.null.template.upbound.io
+  name: rabbitmq.upbound.io
 spec:
-  group: null.template.upbound.io
+  group: rabbitmq.upbound.io
   names:
     categories:
     - crossplane

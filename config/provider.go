@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	resourcePrefix = "template"
+	resourcePrefix = "rabbitmq"
 	modulePath     = "github.com/haooliveira84/provider-rabbitmq"
 )
 

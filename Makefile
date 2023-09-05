@@ -6,11 +6,11 @@ PROJECT_REPO ?= github.com/haooliveira84/$(PROJECT_NAME)
 
 export TERRAFORM_VERSION ?= 1.3.3
 
-export TERRAFORM_PROVIDER_SOURCE ?= cyrilgdn/terraform-provider-rabbitmq
-export TERRAFORM_PROVIDER_REPO ?= https://github.com/cyrilgdn/terraform-provider-rabbitmq
-export TERRAFORM_PROVIDER_VERSION ?= 1.8.0
-export TERRAFORM_PROVIDER_DOWNLOAD_NAME ?= terraform-provider-rabbitmq
-export TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX ?= https://github.com/cyrilgdn/terraform-provider-rabbitmq/releases/download/v1.8.0
+export TERRAFORM_PROVIDER_SOURCE := cyrilgdn/terraform-provider-rabbitmq
+export TERRAFORM_PROVIDER_REPO := https://github.com/cyrilgdn/terraform-provider-rabbitmq
+export TERRAFORM_PROVIDER_VERSION := 1.8.0
+export TERRAFORM_PROVIDER_DOWNLOAD_NAME := terraform-provider-rabbitmq
+export TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX := https://github.com/cyrilgdn/terraform-provider-rabbitmq/releases/download/v1.8.0
 
 export TERRAFORM_DOCS_PATH ?= docs/resources
 
@@ -83,7 +83,7 @@ fallthrough: submodules
 
 # NOTE(hasheddan): we force image building to happen prior to xpkg build so that
 # we ensure image is present in daemon.
-xpkg.build.upjet-provider-template: do.build.images
+xpkg.build.upjet-provider-rabbitmq: do.build.images
 
 # NOTE(hasheddan): we ensure up is installed prior to running platform-specific
 # build steps in parallel to avoid encountering an installation race condition.
