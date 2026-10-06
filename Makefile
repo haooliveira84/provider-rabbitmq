@@ -4,18 +4,19 @@
 PROJECT_NAME ?= provider-rabbitmq
 PROJECT_REPO ?= github.com/haooliveira84/$(PROJECT_NAME)
 
-export TERRAFORM_VERSION ?= 1.3.3
+export TERRAFORM_VERSION ?= 1.5.7
 
-export TERRAFORM_PROVIDER_SOURCE := haooliveira/rabbitmq
-export TERRAFORM_PROVIDER_REPO := https://github.com/haooliveira/terraform-provider-rabbitmq
-export TERRAFORM_PROVIDER_VERSION := 1.8.2
-export TERRAFORM_PROVIDER_DOWNLOAD_NAME := terraform-provider-rabbitmq
-export TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX := https://github.com/haooliveira/terraform-provider-rabbitmq/releases/download/v1.8.2
+# Do not allow a version of terraform greater than 1.5.x, due to versions 1.6+ being
+# licensed under BSL, which is not permitted.
+TERRAFORM_VERSION_VALID := $(shell [ "$(TERRAFORM_VERSION)" = "`printf "$(TERRAFORM_VERSION)\n1.6" | sort -V | head -n1`" ] && echo 1 || echo 0)
 
-export TERRAFORM_DOCS_PATH ?= docs/resources
-
-export BUILD_REGISTRY := 574485109765.dkr.ecr.us-east-1.amazonaws.com/crossplane
-export DOCKER_REGISTRY := 574485109765.dkr.ecr.us-east-1.amazonaws.com/crossplane
+export TERRAFORM_PROVIDER_SOURCE ?= cyrilgdn/rabbitmq
+export TERRAFORM_PROVIDER_REPO ?= https://github.com/cyrilgdn/terraform-provider-rabbitmq
+export TERRAFORM_PROVIDER_VERSION ?= 1.10.1
+export TERRAFORM_PROVIDER_DOWNLOAD_NAME ?= terraform-provider-rabbitmq
+export TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX ?= $(TERRAFORM_PROVIDER_REPO)/releases/download/v$(TERRAFORM_PROVIDER_VERSION)
+export TERRAFORM_NATIVE_PROVIDER_BINARY ?= terraform-provider-rabbitmq_v1.10.1
+export TERRAFORM_DOCS_PATH ?= website/docs/r
 
 
 PLATFORMS ?= linux_amd64 linux_arm64
@@ -43,8 +44,8 @@ NPROCS ?= 1
 # to half the number of CPU cores.
 GO_TEST_PARALLEL := $(shell echo $$(( $(NPROCS) / 2 )))
 
-GO_REQUIRED_VERSION ?= 1.19
-GOLANGCILINT_VERSION ?= 1.50.0
+GO_REQUIRED_VERSION ?= 1.26
+GOLANGCILINT_VERSION ?= 2.13.0
 GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/provider $(GO_PROJECT)/cmd/generator
 GO_LDFLAGS += -X $(GO_PROJECT)/internal/version.Version=$(VERSION)
 GO_SUBDIRS += cmd internal apis
@@ -53,26 +54,28 @@ GO_SUBDIRS += cmd internal apis
 # ====================================================================================
 # Setup Kubernetes tools
 
-KIND_VERSION = v0.15.0
-UP_VERSION = v0.18.0
-UP_CHANNEL = stable
-UPTEST_VERSION = v0.5.0
+KIND_VERSION = v0.31.0
+UPTEST_VERSION = v2.2.0
+CRDDIFF_VERSION = v0.12.1
+CROSSPLANE_CLI_VERSION = v2.2.1
+# for e2e testing
+CROSSPLANE_VERSION = 2.2.1
 -include build/makelib/k8s_tools.mk
 
 # ====================================================================================
 # Setup Images
 
-REGISTRY_ORGS ?= xpkg.upbound.io/upbound
+REGISTRY_ORGS ?= ghcr.io/crossplane-contrib
 IMAGES = $(PROJECT_NAME)
 -include build/makelib/imagelight.mk
 
 # ====================================================================================
 # Setup XPKG
 
-XPKG_REG_ORGS ?= xpkg.upbound.io/upbound
-# NOTE(hasheddan): skip promoting on xpkg.upbound.io as channel tags are
+XPKG_REG_ORGS ?= ghcr.io/crossplane-contrib
+# NOTE(hasheddan): skip promoting on xpkg.crossplane.io as channel tags are
 # inferred.
-XPKG_REG_ORGS_NO_PROMOTE ?= xpkg.upbound.io/upbound
+XPKG_REG_ORGS_NO_PROMOTE ?= ghcr.io/crossplane-contrib
 XPKGS = $(PROJECT_NAME)
 -include build/makelib/xpkg.mk
 
@@ -96,7 +99,7 @@ xpkg.build.provider-rabbitmq: do.build.images
 
 # NOTE(hasheddan): we ensure up is installed prior to running platform-specific
 # build steps in parallel to avoid encountering an installation race condition.
-build.init: $(UP)
+build.init: $(UP) $(CROSSPLANE_CLI) check-terraform-version
 
 # ====================================================================================
 # Setup Terraform for fetching provider schema
@@ -104,7 +107,12 @@ TERRAFORM := $(TOOLS_HOST_DIR)/terraform-$(TERRAFORM_VERSION)
 TERRAFORM_WORKDIR := $(WORK_DIR)/terraform
 TERRAFORM_PROVIDER_SCHEMA := config/schema.json
 
-$(TERRAFORM):
+check-terraform-version:
+ifneq ($(TERRAFORM_VERSION_VALID),1)
+	$(error invalid TERRAFORM_VERSION $(TERRAFORM_VERSION), must be less than 1.6.0 since that version introduced a not permitted BSL license))
+endif
+
+$(TERRAFORM): check-terraform-version
 	@$(INFO) installing terraform $(HOSTOS)-$(HOSTARCH)
 	@mkdir -p $(TOOLS_HOST_DIR)/tmp-terraform
 	@curl -fsSL https://releases.hashicorp.com/terraform/$(TERRAFORM_VERSION)/terraform_$(TERRAFORM_VERSION)_$(SAFEHOST_PLATFORM).zip -o $(TOOLS_HOST_DIR)/tmp-terraform/terraform.zip
@@ -130,7 +138,7 @@ pull-docs:
 
 generate.init: $(TERRAFORM_PROVIDER_SCHEMA) pull-docs
 
-.PHONY: $(TERRAFORM_PROVIDER_SCHEMA) pull-docs
+.PHONY: $(TERRAFORM_PROVIDER_SCHEMA) pull-docs check-terraform-version
 # ====================================================================================
 # Targets
 
@@ -142,6 +150,9 @@ generate.init: $(TERRAFORM_PROVIDER_SCHEMA) pull-docs
 # its location in CI so that we cache between builds.
 go.cachedir:
 	@go env GOCACHE
+
+go.mod.cachedir:
+	@go env GOMODCACHE
 
 # Generate a coverage report for cobertura applying exclusions on
 # - generated file
@@ -161,18 +172,18 @@ submodules:
 run: go.build
 	@$(INFO) Running Crossplane locally out-of-cluster . . .
 	@# To see other arguments that can be provided, run the command with --help instead
-	UPBOUND_CONTEXT="local" $(GO_OUT_DIR)/provider --debug
+	$(GO_OUT_DIR)/provider --debug
 
 # ====================================================================================
 # End to End Testing
-CROSSPLANE_NAMESPACE = upbound-system
+CROSSPLANE_NAMESPACE = crossplane-system
 -include build/makelib/local.xpkg.mk
 -include build/makelib/controlplane.mk
 
 # This target requires the following environment variables to be set:
 # - UPTEST_EXAMPLE_LIST, a comma-separated list of examples to test
 #   To ensure the proper functioning of the end-to-end test resource pre-deletion hook, it is crucial to arrange your resources appropriately.
-#   You can check the basic implementation here: https://github.com/upbound/uptest/blob/main/internal/rabbitmqs/01-delete.yaml.tmpl.
+#   You can check the basic implementation here: https://github.com/crossplane/uptest/blob/main/internal/templates/03-delete.yaml.tmpl.
 # - UPTEST_CLOUD_CREDENTIALS (optional), multiple sets of AWS IAM User credentials specified as key=value pairs.
 #   The support keys are currently `DEFAULT` and `PEER`. So, an example for the value of this env. variable is:
 #   DEFAULT='[default]
@@ -182,16 +193,16 @@ CROSSPLANE_NAMESPACE = upbound-system
 #   aws_access_key_id = REDACTED
 #   aws_secret_access_key = REDACTED'
 #   The associated `ProviderConfig`s will be named as `default` and `peer`.
-# - UPTEST_DATASOURCE_PATH (optional), see https://github.com/upbound/uptest#injecting-dynamic-values-and-datasource
-uptest: $(UPTEST) $(KUBECTL) $(KUTTL)
+# - UPTEST_DATASOURCE_PATH (optional), please see https://github.com/crossplane/uptest#injecting-dynamic-values-and-datasource
+uptest: $(UPTEST) $(KUBECTL) $(CHAINSAW) $(CROSSPLANE_CLI)
 	@$(INFO) running automated tests
-	@KUBECTL=$(KUBECTL) KUTTL=$(KUTTL) $(UPTEST) e2e "${UPTEST_EXAMPLE_LIST}" --data-source="${UPTEST_DATASOURCE_PATH}" --setup-script=cluster/test/setup.sh --default-conditions="Test" || $(FAIL)
+	@KUBECTL=$(KUBECTL) CHAINSAW=$(CHAINSAW) CROSSPLANE_CLI=$(CROSSPLANE_CLI) CROSSPLANE_NAMESPACE=$(CROSSPLANE_NAMESPACE) $(UPTEST) e2e "${UPTEST_EXAMPLE_LIST}" --data-source="${UPTEST_DATASOURCE_PATH}" --setup-script=cluster/test/setup.sh --default-conditions="Test" || $(FAIL)
 	@$(OK) running automated tests
 
 local-deploy: build controlplane.up local.xpkg.deploy.provider.$(PROJECT_NAME)
 	@$(INFO) running locally built provider
 	@$(KUBECTL) wait provider.pkg $(PROJECT_NAME) --for condition=Healthy --timeout 5m
-	@$(KUBECTL) -n upbound-system wait --for=condition=Available deployment --all --timeout=5m
+	@$(KUBECTL) -n crossplane-system wait --for=condition=Available deployment --all --timeout=5m
 	@$(OK) running locally built provider
 
 e2e: local-deploy uptest
@@ -199,12 +210,12 @@ e2e: local-deploy uptest
 crddiff: $(UPTEST)
 	@$(INFO) Checking breaking CRD schema changes
 	@for crd in $${MODIFIED_CRD_LIST}; do \
-		if ! git cat-file -e "$${GITHUB_BASE_REF}:$${crd}" 2>/dev/rabbitmq; then \
+		if ! git cat-file -e "$${GITHUB_BASE_REF}:$${crd}" 2>/dev/null; then \
 			echo "CRD $${crd} does not exist in the $${GITHUB_BASE_REF} branch. Skipping..." ; \
 			continue ; \
 		fi ; \
 		echo "Checking $${crd} for breaking API changes..." ; \
-		changes_detected=$$($(UPTEST) crddiff revision <(git cat-file -p "$${GITHUB_BASE_REF}:$${crd}") "$${crd}" 2>&1) ; \
+		changes_detected=$$(go run github.com/crossplane/uptest/cmd/crddiff@$(CRDDIFF_VERSION) revision --enable-upjet-extensions <(git cat-file -p "$${GITHUB_BASE_REF}:$${crd}") "$${crd}" 2>&1) ; \
 		if [[ $$? != 0 ]] ; then \
 			printf "\033[31m"; echo "Breaking change detected!"; printf "\033[0m" ; \
 			echo "$${changes_detected}" ; \
@@ -245,3 +256,7 @@ crossplane.help:
 help-special: crossplane.help
 
 .PHONY: crossplane.help help-special
+
+# TODO(negz): Update CI to use these targets.
+vendor: modules.download
+vendor.check: modules.check

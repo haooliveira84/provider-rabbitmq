@@ -1,21 +1,37 @@
-/*
-Copyright 2022 Upbound Inc.
-*/
-
 package config
 
-import "github.com/upbound/upjet/pkg/config"
+import "github.com/crossplane/upjet/v2/pkg/config"
+
+// nameAtVhost: Terraform ID is "<name>@<vhost>".
+var nameAtVhost = config.TemplatedStringAsIdentifier("name", "{{ .external_name }}@{{ .parameters.vhost }}")
+
+// userAtVhost: Terraform ID is "<user>@<vhost>".
+var userAtVhost = config.TemplatedStringAsIdentifier("user", "{{ .external_name }}@{{ .parameters.vhost }}")
 
 // ExternalNameConfigs contains all external name configurations for this
-// provider.
+// provider. IDs follow the import formats documented by
+// terraform-provider-rabbitmq.
 var ExternalNameConfigs = map[string]config.ExternalName{
-	// Import requires using a randomly generated ID from provider: nl-2e21sda
-	"rabbitmq_resource": config.IdentifierFromProvider,
+	"rabbitmq_vhost": config.NameAsIdentifier,
+	"rabbitmq_user":  config.NameAsIdentifier,
+
+	"rabbitmq_exchange":            nameAtVhost,
+	"rabbitmq_queue":               nameAtVhost,
+	"rabbitmq_policy":              nameAtVhost,
+	"rabbitmq_operator_policy":     nameAtVhost,
+	"rabbitmq_shovel":              nameAtVhost,
+	"rabbitmq_federation_upstream": nameAtVhost,
+
+	"rabbitmq_permissions":       userAtVhost,
+	"rabbitmq_topic_permissions": userAtVhost,
+
+	// ID is "vhost/source/destination/destination_type/properties_key" and
+	// properties_key is computed by the server.
+	"rabbitmq_binding": config.IdentifierFromProvider,
 }
 
 // ExternalNameConfigurations applies all external name configs listed in the
-// table ExternalNameConfigs and sets the version of those resources to v1beta1
-// assuming they will be tested.
+// table ExternalNameConfigs.
 func ExternalNameConfigurations() config.ResourceOption {
 	return func(r *config.Resource) {
 		if e, ok := ExternalNameConfigs[r.Name]; ok {

@@ -3,4 +3,4 @@ kind: Provider
 metadata:
   name: provider-rabbitmq
 spec:
-  package: haooliveira84/provider-rabbitmq:v0.1.0
+  package: xpkg.crossplane.io/haooliveira84/provider-rabbitmq:v0.1.0

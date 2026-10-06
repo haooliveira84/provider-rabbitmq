@@ -1,0 +1,97 @@
+apiVersion: rabbitmq.rabbitmq.crossplane.io/v1alpha1
+kind: FederationUpstream
+metadata:
+  annotations:
+    meta.upbound.io/example-id: rabbitmq/v1alpha1/federationupstream
+  labels:
+    testing.upbound.io/example-name: foo
+  name: foo
+spec:
+  forProvider:
+    definition:
+    - ackMode: on-confirm
+      maxHops: 1
+      prefetchCount: 1000
+      reconnectDelay: 5
+      trustUserId: false
+      uriSecretRef:
+        key: example-key
+        name: example-secret
+        namespace: upbound-system
+    vhostSelector:
+      matchLabels:
+        testing.upbound.io/example-name: guest
+
+---
+
+apiVersion: rabbitmq.rabbitmq.crossplane.io/v1alpha1
+kind: Exchange
+metadata:
+  annotations:
+    meta.upbound.io/example-id: rabbitmq/v1alpha1/federationupstream
+  labels:
+    testing.upbound.io/example-name: foo
+  name: foo
+spec:
+  forProvider:
+    settings:
+    - durable: "true"
+      type: topic
+    vhostSelector:
+      matchLabels:
+        testing.upbound.io/example-name: guest
+
+---
+
+apiVersion: rabbitmq.rabbitmq.crossplane.io/v1alpha1
+kind: Permissions
+metadata:
+  annotations:
+    meta.upbound.io/example-id: rabbitmq/v1alpha1/federationupstream
+  labels:
+    testing.upbound.io/example-name: guest
+  name: guest
+spec:
+  forProvider:
+    permissions:
+    - configure: .*
+      read: .*
+      write: .*
+    vhostSelector:
+      matchLabels:
+        testing.upbound.io/example-name: test
+
+---
+
+apiVersion: rabbitmq.rabbitmq.crossplane.io/v1alpha1
+kind: Policy
+metadata:
+  annotations:
+    meta.upbound.io/example-id: rabbitmq/v1alpha1/federationupstream
+  labels:
+    testing.upbound.io/example-name: foo
+  name: foo
+spec:
+  forProvider:
+    policy:
+    - applyTo: exchanges
+      definition:
+        federation-upstream: foo
+      pattern: foo
+      priority: 1
+    vhostSelector:
+      matchLabels:
+        testing.upbound.io/example-name: guest
+
+---
+
+apiVersion: rabbitmq.rabbitmq.crossplane.io/v1alpha1
+kind: Vhost
+metadata:
+  annotations:
+    meta.upbound.io/example-id: rabbitmq/v1alpha1/federationupstream
+  labels:
+    testing.upbound.io/example-name: test
+  name: test
+spec:
+  forProvider: {}

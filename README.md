@@ -1,33 +1,15 @@
-# Provider rabbitmq
+# Provider RabbitMQ
 
-`provider-rabbitmq` is a [Crossplane](https://crossplane.io/) provider that
-is built using [Upjet](https://github.com/upbound/upjet) code
-generation tools and exposes XRM-conformant managed resources for the
-rabbitmq API.
+`provider-rabbitmq` is a [Crossplane](https://crossplane.io/) provider
+rabbitmq that is built using [Upjet](https://github.com/crossplane/upjet) code
+generation tools and exposes XRM-conformant managed resources for the RabbitMQ
+API.
 
 ## Getting Started
 
-Install the provider by using the following command after changing the image tag
-to the [latest release](https://marketplace.upbound.io/providers/haooliveira84/provider-rabbitmq):
-```
-up ctp provider install haooliveira84/provider-rabbitmq:v0.1.0
-```
+This rabbitmq serves as a starting point for generating a new [Crossplane Provider](https://docs.crossplane.io/latest/packages/providers/) using the [`upjet`](https://github.com/crossplane/upjet) tooling. Please follow the guide linked below to generate a new Provider:
 
-Alternatively, you can use declarative installation:
-```
-cat <<EOF | kubectl apply -f -
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-rabbitmq
-spec:
-  package: haooliveira84/provider-rabbitmq:v0.1.0
-EOF
-```
-
-Notice that in this example Provider resource is referencing ControllerConfig with debug enabled.
-
-You can see the API reference [here](https://doc.crds.dev/github.com/haooliveira84/provider-rabbitmq).
+https://github.com/crossplane/upjet/blob/main/docs/generating-a-provider.md
 
 ## Developing
 

@@ -1,0 +1,51 @@
+apiVersion: rabbitmq.rabbitmq.crossplane.io/v1alpha1
+kind: Queue
+metadata:
+  annotations:
+    meta.upbound.io/example-id: rabbitmq/v1alpha1/queue
+  labels:
+    testing.upbound.io/example-name: test
+  name: test
+spec:
+  forProvider:
+    settings:
+    - arguments:
+        x-queue-type: quorum
+      autoDelete: true
+      durable: false
+    vhostSelector:
+      matchLabels:
+        testing.upbound.io/example-name: guest
+
+---
+
+apiVersion: rabbitmq.rabbitmq.crossplane.io/v1alpha1
+kind: Permissions
+metadata:
+  annotations:
+    meta.upbound.io/example-id: rabbitmq/v1alpha1/queue
+  labels:
+    testing.upbound.io/example-name: guest
+  name: guest
+spec:
+  forProvider:
+    permissions:
+    - configure: .*
+      read: .*
+      write: .*
+    vhostSelector:
+      matchLabels:
+        testing.upbound.io/example-name: test
+
+---
+
+apiVersion: rabbitmq.rabbitmq.crossplane.io/v1alpha1
+kind: Vhost
+metadata:
+  annotations:
+    meta.upbound.io/example-id: rabbitmq/v1alpha1/queue
+  labels:
+    testing.upbound.io/example-name: test
+  name: test
+spec:
+  forProvider: {}
