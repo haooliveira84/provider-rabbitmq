@@ -17,9 +17,9 @@ func TestExternalNames(t *testing.T) {
 		params       map[string]any
 		wantID       string
 	}{
-		"vhost":              {"rabbitmq_vhost", vhost, nil, vhost},
-		"user":               {"rabbitmq_user", "alice", nil, "alice"},
-		"exchange":           {"rabbitmq_exchange", "orders", map[string]any{vhostKey: vhost}, "orders@prod"},
+		"vhost":              {tfVhost, vhost, nil, vhost},
+		"user":               {tfUser, "alice", nil, "alice"},
+		"exchange":           {tfExchange, "orders", map[string]any{vhostKey: vhost}, "orders@prod"},
 		"queue":              {"rabbitmq_queue", "orders.created", map[string]any{vhostKey: vhost}, "orders.created@prod"},
 		"policy":             {"rabbitmq_policy", "ha", map[string]any{"vhost": "/"}, "ha@/"},
 		"operatorPolicy":     {"rabbitmq_operator_policy", "limits", map[string]any{vhostKey: vhost}, "limits@prod"},

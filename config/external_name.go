@@ -2,6 +2,13 @@ package config
 
 import "github.com/crossplane/upjet/v2/pkg/config"
 
+// Terraform resource names that are referenced from more than one place.
+const (
+	tfVhost    = "rabbitmq_vhost"
+	tfUser     = "rabbitmq_user"
+	tfExchange = "rabbitmq_exchange"
+)
+
 // nameAtVhost: Terraform ID is "<name>@<vhost>".
 var nameAtVhost = config.TemplatedStringAsIdentifier("name", "{{ .external_name }}@{{ .parameters.vhost }}")
 
@@ -12,10 +19,10 @@ var userAtVhost = config.TemplatedStringAsIdentifier("user", "{{ .external_name 
 // provider. IDs follow the import formats documented by
 // terraform-provider-rabbitmq.
 var ExternalNameConfigs = map[string]config.ExternalName{
-	"rabbitmq_vhost": config.NameAsIdentifier,
-	"rabbitmq_user":  config.NameAsIdentifier,
+	tfVhost: config.NameAsIdentifier,
+	tfUser:  config.NameAsIdentifier,
 
-	"rabbitmq_exchange":            nameAtVhost,
+	tfExchange:                     nameAtVhost,
 	"rabbitmq_queue":               nameAtVhost,
 	"rabbitmq_policy":              nameAtVhost,
 	"rabbitmq_operator_policy":     nameAtVhost,

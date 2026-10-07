@@ -8,7 +8,7 @@ import (
 
 var wantKinds = map[string]string{
 	"rabbitmq_binding":             "Binding",
-	"rabbitmq_exchange":            "Exchange",
+	tfExchange:                     "Exchange",
 	"rabbitmq_federation_upstream": "FederationUpstream",
 	"rabbitmq_operator_policy":     "OperatorPolicy",
 	"rabbitmq_permissions":         "Permissions",
@@ -16,8 +16,8 @@ var wantKinds = map[string]string{
 	"rabbitmq_queue":               "Queue",
 	"rabbitmq_shovel":              "Shovel",
 	"rabbitmq_topic_permissions":   "TopicPermissions",
-	"rabbitmq_user":                "User",
-	"rabbitmq_vhost":               "Vhost",
+	tfUser:                         "User",
+	tfVhost:                        "Vhost",
 }
 
 func TestProviders(t *testing.T) {
@@ -41,19 +41,19 @@ func TestProviders(t *testing.T) {
 				if r.ShortGroup != "rabbitmq" {
 					t.Errorf("%s: short group %q, want rabbitmq", tfName, r.ShortGroup)
 				}
-				if tfName != "rabbitmq_vhost" && tfName != "rabbitmq_user" {
-					if r.References["vhost"].TerraformName != "rabbitmq_vhost" {
+				if tfName != tfVhost && tfName != tfUser {
+					if r.References["vhost"].TerraformName != tfVhost {
 						t.Errorf("%s: vhost reference missing", tfName)
 					}
 				}
 			}
-			if p.Resources["rabbitmq_permissions"].References["user"].TerraformName != "rabbitmq_user" {
+			if p.Resources["rabbitmq_permissions"].References["user"].TerraformName != tfUser {
 				t.Error("permissions: user reference missing")
 			}
-			if p.Resources["rabbitmq_topic_permissions"].References["permissions.exchange"].TerraformName != "rabbitmq_exchange" {
+			if p.Resources["rabbitmq_topic_permissions"].References["permissions.exchange"].TerraformName != tfExchange {
 				t.Error("topic_permissions: exchange reference missing")
 			}
-			if p.Resources["rabbitmq_binding"].References["source"].TerraformName != "rabbitmq_exchange" {
+			if p.Resources["rabbitmq_binding"].References["source"].TerraformName != tfExchange {
 				t.Error("binding: source reference missing")
 			}
 			if _, ok := p.Resources["rabbitmq_binding"].References["destination"]; ok {
